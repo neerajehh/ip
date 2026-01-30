@@ -11,8 +11,8 @@ public class Neeraj {
         System.out.println("===========================\n");
 
         Scanner scanner = new Scanner(System.in);
-        String[] tasks = new String[100];  // Store up to 100 tasks
-        int taskCount = 0;                 // Track number of tasks
+        Task[] tasks = new Task[100];  // Changed from String[] to Task[]
+        int taskCount = 0;
 
         while (true) {
             String input = scanner.nextLine();
@@ -23,12 +23,26 @@ public class Neeraj {
                 System.out.println("===========================");
                 break;
             } else if (input.equals("list")) {
+                System.out.println("Here are the tasks in your list:");
                 for (int i = 0; i < taskCount; i++) {
-                    System.out.println((i + 1) + ". " + tasks[i]);
+                    System.out.println((i + 1) + "." + tasks[i]);
                 }
                 System.out.println("===========================\n");
+            } else if (input.startsWith("mark ")) {
+                int taskNumber = Integer.parseInt(input.substring(5)) - 1;
+                tasks[taskNumber].markAsDone();
+                System.out.println("Nice! I've marked this task as done:");
+                System.out.println("  " + tasks[taskNumber]);
+                System.out.println("===========================\n");
+            } else if (input.startsWith("unmark ")) {
+                int taskNumber = Integer.parseInt(input.substring(7)) - 1;
+                tasks[taskNumber].markAsNotDone();
+                System.out.println("OK, I've marked this task as not done yet:");
+                System.out.println("  " + tasks[taskNumber]);
+                System.out.println("===========================\n");
             } else {
-                tasks[taskCount] = input;
+                Task newTask = new Task(input);  // Create Task object
+                tasks[taskCount] = newTask;
                 taskCount++;
                 System.out.println("added: " + input);
                 System.out.println("===========================\n");
