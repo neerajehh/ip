@@ -11,6 +11,8 @@ public class Neeraj {
         System.out.println("===========================\n");
 
         Scanner scanner = new Scanner(System.in);
+        String[] tasks = new String[100];  // Store up to 100 tasks
+        int taskCount = 0;                 // Track number of tasks
 
         while (true) {
             String input = scanner.nextLine();
@@ -20,8 +22,15 @@ public class Neeraj {
                 System.out.println("Bye. Hope to see you again soon!");
                 System.out.println("===========================");
                 break;
+            } else if (input.equals("list")) {
+                for (int i = 0; i < taskCount; i++) {
+                    System.out.println((i + 1) + ". " + tasks[i]);
+                }
+                System.out.println("===========================\n");
             } else {
-                System.out.println(input);
+                tasks[taskCount] = input;
+                taskCount++;
+                System.out.println("added: " + input);
                 System.out.println("===========================\n");
             }
         }
