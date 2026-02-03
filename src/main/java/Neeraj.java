@@ -11,7 +11,7 @@ public class Neeraj {
         System.out.println("===========================\n");
 
         Scanner scanner = new Scanner(System.in);
-        Task[] tasks = new Task[100];  // Changed from String[] to Task[]
+        Task[] tasks = new Task[100];
         int taskCount = 0;
 
         while (true) {
@@ -40,11 +40,42 @@ public class Neeraj {
                 System.out.println("OK, I've marked this task as not done yet:");
                 System.out.println("  " + tasks[taskNumber]);
                 System.out.println("===========================\n");
-            } else {
-                Task newTask = new Task(input);  // Create Task object
+            } else if (input.startsWith("todo ")) {
+                String description = input.substring(5);
+                Task newTask = new Todo(description);
                 tasks[taskCount] = newTask;
                 taskCount++;
-                System.out.println("added: " + input);
+                System.out.println("Got it. I've added this task:");
+                System.out.println("  " + newTask);
+                System.out.println("Now you have " + taskCount + " tasks in the list.");
+                System.out.println("===========================\n");
+            } else if (input.startsWith("deadline ")) {
+                String[] parts = input.substring(9).split(" /by ", 2);
+                String description = parts[0];
+                String by = parts[1];
+                Task newTask = new Deadline(description, by);
+                tasks[taskCount] = newTask;
+                taskCount++;
+                System.out.println("Got it. I've added this task:");
+                System.out.println("  " + newTask);
+                System.out.println("Now you have " + taskCount + " tasks in the list.");
+                System.out.println("===========================\n");
+            } else if (input.startsWith("event ")) {
+                String remaining = input.substring(6);
+                String[] parts1 = remaining.split(" /from ", 2);
+                String description = parts1[0];
+                String[] parts2 = parts1[1].split(" /to ", 2);
+                String from = parts2[0];
+                String to = parts2[1];
+                Task newTask = new Event(description, from, to);
+                tasks[taskCount] = newTask;
+                taskCount++;
+                System.out.println("Got it. I've added this task:");
+                System.out.println("  " + newTask);
+                System.out.println("Now you have " + taskCount + " tasks in the list.");
+                System.out.println("===========================\n");
+            } else {
+                System.out.println("I don't understand that command!");
                 System.out.println("===========================\n");
             }
         }
