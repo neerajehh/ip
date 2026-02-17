@@ -71,6 +71,8 @@ public class Neeraj {
             handleDeadline(input);
         } else if (input.startsWith("event ")) {
             handleEvent(input);
+        } else if (input.startsWith("delete ")) {
+            handleDelete(input);
         } else {
             handleUnknownCommand();
         }
@@ -136,6 +138,31 @@ public class Neeraj {
             task.markAsNotDone();
             System.out.println("OK, I've marked this task as not done yet:");
             System.out.println("  " + task);
+            System.out.println(LINE + "\n");
+        } catch (NumberFormatException e) {
+            System.out.println("OOPS!!! Please provide a valid task number.");
+            System.out.println(LINE + "\n");
+        } catch (NeerajException e) {
+            System.out.println(e.getMessage());
+            System.out.println(LINE + "\n");
+        }
+    }
+
+    /**
+     * Handles the delete command.
+     *
+     * @param input The user input.
+     */
+    private void handleDelete(String input) {
+        try {
+            int taskNumber = Integer.parseInt(input.substring(7).trim()) - 1;
+            if (taskNumber < 0 || taskNumber >= tasks.size()) {
+                throw new NeerajException("OOPS!!! Invalid task number.");
+            }
+            Task removed = tasks.remove(taskNumber);
+            System.out.println("Noted. I've removed this task:");
+            System.out.println("  " + removed);
+            System.out.println("Now you have " + tasks.size() + " tasks in the list.");
             System.out.println(LINE + "\n");
         } catch (NumberFormatException e) {
             System.out.println("OOPS!!! Please provide a valid task number.");
