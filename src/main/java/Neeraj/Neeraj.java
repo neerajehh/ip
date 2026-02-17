@@ -14,9 +14,10 @@ public class Neeraj {
 
     /**
      * Creates a new Neeraj chatbot.
+     * Loads previously saved tasks from storage.
      */
     public Neeraj() {
-        this.tasks = new ArrayList<>();
+        this.tasks = Storage.load();
         this.scanner = new Scanner(System.in);
     }
 
@@ -111,6 +112,7 @@ public class Neeraj {
             }
             Task task = tasks.get(taskNumber);
             task.markAsDone();
+            Storage.save(tasks);
             System.out.println("Nice! I've marked this task as done:");
             System.out.println("  " + task);
             System.out.println(LINE + "\n");
@@ -136,6 +138,7 @@ public class Neeraj {
             }
             Task task = tasks.get(taskNumber);
             task.markAsNotDone();
+            Storage.save(tasks);
             System.out.println("OK, I've marked this task as not done yet:");
             System.out.println("  " + task);
             System.out.println(LINE + "\n");
@@ -160,6 +163,7 @@ public class Neeraj {
                 throw new NeerajException("OOPS!!! Invalid task number.");
             }
             Task removed = tasks.remove(taskNumber);
+            Storage.save(tasks);
             System.out.println("Noted. I've removed this task:");
             System.out.println("  " + removed);
             System.out.println("Now you have " + tasks.size() + " tasks in the list.");
@@ -262,14 +266,15 @@ public class Neeraj {
     }
 
     /**
-     * Adds a task and displays confirmation message.
+     * Adds a task, saves to storage, and displays confirmation message.
      *
      * @param task The task to add.
      */
     private void addTask(Task task) {
         tasks.add(task);
+        Storage.save(tasks);
         System.out.println("Got it. I've added this task:");
-        System.out.println("  " + task);
+        System.out.println("  " + task);lis
         System.out.println("Now you have " + tasks.size() + " tasks in the list.");
         System.out.println(LINE + "\n");
     }

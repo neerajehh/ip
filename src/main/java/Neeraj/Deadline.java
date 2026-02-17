@@ -1,11 +1,16 @@
 package Neeraj;
 
 public class Deadline extends Task {
-    protected String by;
+    private String by;
 
     public Deadline(String description, String by) {
         super(description);
         this.by = by;
+    }
+
+    @Override
+    public String toSaveFormat() {
+        return "D | " + getSaveStatus() + " | " + getDescription() + " | " + by;
     }
 
     @Override

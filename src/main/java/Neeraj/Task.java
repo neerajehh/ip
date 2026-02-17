@@ -1,6 +1,6 @@
 package Neeraj;
 
-public class Task {
+public abstract class Task {
     private String description;
     private boolean isDone;
 
@@ -10,7 +10,7 @@ public class Task {
     }
 
     public String getStatusIcon() {
-        return (isDone ? "X" : " "); // mark done task with X
+        return (isDone ? "X" : " ");
     }
 
     public void markAsDone() {
@@ -24,6 +24,14 @@ public class Task {
     public String getDescription() {
         return description;
     }
+
+    /** Returns 1 if task is done, 0 otherwise, for use in save format */
+    public String getSaveStatus() {
+        return (isDone ? "1" : "0");
+    }
+
+    /** Returns the task in a format suitable for saving to file */
+    public abstract String toSaveFormat();
 
     @Override
     public String toString() {
