@@ -1,289 +1,226 @@
 package Neeraj;
 
-import java.util.ArrayList;
-import java.util.Scanner;
-
 /**
- * Main class for Neeraj chatbot.
- * Manages tasks including todos, deadlines, and events.
+ * Main chatbot class that handles user interactions and task management.
  */
 public class Neeraj {
-    private static final String LINE = "===========================";
-    private ArrayList<Task> tasks;
-    private Scanner scanner;
+    private Storage storage;
+    private TaskList tasks;
+    private Ui ui;
 
     /**
-     * Creates a new Neeraj chatbot.
-     * Loads previously saved tasks from storage.
+     * Sets up the chatbot and loads any saved tasks from file.
      */
     public Neeraj() {
-        this.tasks = Storage.load();
-        this.scanner = new Scanner(System.in);
+        ui = new Ui();
+        storage = new Storage();
+        tasks = new TaskList(Storage.load());
     }
 
     /**
-     * Runs the chatbot program.
+     * Starts the main program loop.
      */
     public void run() {
-        showWelcome();
+        ui.showWelcome();
 
         boolean isExit = false;
         while (!isExit) {
-            String input = scanner.nextLine();
-            System.out.println(LINE);
+            String input = ui.readCommand();
+            ui.showLine();
             isExit = executeCommand(input);
         }
 
-        scanner.close();
+        ui.close();
     }
 
     /**
-     * Displays the welcome message.
-     */
-    private void showWelcome() {
-        String logo = LINE + "\n"
-                + "        NEERAJ BOT        \n"
-                + LINE + "\n";
-        System.out.println("Hello from\n" + logo);
-        System.out.println("Hello! I'm Neeraj");
-        System.out.println("What can I do for you?");
-        System.out.println(LINE + "\n");
-    }
-
-    /**
-     * Executes a command based on user input.
+     * Processes user commands and calls the appropriate handler.
      *
-     * @param input The user's input.
-     * @return true if the command is to exit, false otherwise.
+     * @param input What the user typed
+     * @return true when user wants to exit
      */
     private boolean executeCommand(String input) {
-        if (input.equals("bye")) {
-            handleBye();
-            return true;
-        } else if (input.equals("list")) {
-            handleList();
-        } else if (input.startsWith("mark ")) {
-            handleMark(input);
-        } else if (input.startsWith("unmark ")) {
-            handleUnmark(input);
-        } else if (input.startsWith("todo ")) {
-            handleTodo(input);
-        } else if (input.startsWith("deadline ")) {
-            handleDeadline(input);
-        } else if (input.startsWith("event ")) {
-            handleEvent(input);
-        } else if (input.startsWith("delete ")) {
-            handleDelete(input);
-        } else {
-            handleUnknownCommand();
+        String command = Parser.getCommand(input);
+        String arguments = Parser.getArguments(input);
+
+        try {
+            switch (command) {
+            case "bye":
+                handleBye();
+                return true;
+            case "list":
+                handleList();
+                break;
+            case "mark":
+                handleMark(arguments);
+                break;
+            case "unmark":
+                handleUnmark(arguments);
+                break;
+            case "todo":
+                handleTodo(arguments);
+                break;
+            case "deadline":
+                handleDeadline(arguments);
+                break;
+            case "event":
+                handleEvent(arguments);
+                break;
+            case "delete":
+                handleDelete(arguments);
+                break;
+            case "find":
+                handleFind(arguments);
+                break;
+            default:
+                handleUnknownCommand();
+            }
+        } catch (NeerajException e) {
+            ui.showError(e.getMessage());
         }
         return false;
     }
 
-    /**
-     * Handles the bye command.
-     */
     private void handleBye() {
-        System.out.println("Bye. Hope to see you again soon!");
-        System.out.println(LINE);
+        ui.showGoodbye();
     }
 
-    /**
-     * Handles the list command.
-     */
     private void handleList() {
-        System.out.println("Here are the tasks in your list:");
-        for (int i = 0; i < tasks.size(); i++) {
-            System.out.println((i + 1) + "." + tasks.get(i));
-        }
-        System.out.println(LINE + "\n");
+        ui.showTaskList(tasks);
     }
 
     /**
-     * Handles the mark command.
+     * Marks a task as complete.
      *
-     * @param input The user input.
+     * @param arguments Task number from user
      */
-    private void handleMark(String input) {
-        try {
-            int taskNumber = Integer.parseInt(input.substring(5).trim()) - 1;
-            if (taskNumber < 0 || taskNumber >= tasks.size()) {
-                throw new NeerajException("OOPS!!! Invalid task number.");
-            }
-            Task task = tasks.get(taskNumber);
-            task.markAsDone();
-            Storage.save(tasks);
-            System.out.println("Nice! I've marked this task as done:");
-            System.out.println("  " + task);
-            System.out.println(LINE + "\n");
-        } catch (NumberFormatException e) {
-            System.out.println("OOPS!!! Please provide a valid task number.");
-            System.out.println(LINE + "\n");
-        } catch (NeerajException e) {
-            System.out.println(e.getMessage());
-            System.out.println(LINE + "\n");
+    private void handleMark(String arguments) throws NeerajException {
+        int taskNumber = Parser.parseTaskNumber(arguments);
+        if (taskNumber >= tasks.size()) {
+            throw new NeerajException("OOPS!!! Invalid task number.");
         }
+        Task task = tasks.get(taskNumber);
+        task.markAsDone();
+        Storage.save(tasks.getTasks());
+        ui.showTaskMarked(task);
     }
 
     /**
-     * Handles the unmark command.
+     * Unmarks a task (sets it back to incomplete).
      *
-     * @param input The user input.
+     * @param arguments Task number from user
      */
-    private void handleUnmark(String input) {
-        try {
-            int taskNumber = Integer.parseInt(input.substring(7).trim()) - 1;
-            if (taskNumber < 0 || taskNumber >= tasks.size()) {
-                throw new NeerajException("OOPS!!! Invalid task number.");
-            }
-            Task task = tasks.get(taskNumber);
-            task.markAsNotDone();
-            Storage.save(tasks);
-            System.out.println("OK, I've marked this task as not done yet:");
-            System.out.println("  " + task);
-            System.out.println(LINE + "\n");
-        } catch (NumberFormatException e) {
-            System.out.println("OOPS!!! Please provide a valid task number.");
-            System.out.println(LINE + "\n");
-        } catch (NeerajException e) {
-            System.out.println(e.getMessage());
-            System.out.println(LINE + "\n");
+    private void handleUnmark(String arguments) throws NeerajException {
+        int taskNumber = Parser.parseTaskNumber(arguments);
+        if (taskNumber >= tasks.size()) {
+            throw new NeerajException("OOPS!!! Invalid task number.");
         }
+        Task task = tasks.get(taskNumber);
+        task.markAsNotDone();
+        Storage.save(tasks.getTasks());
+        ui.showTaskUnmarked(task);
     }
 
     /**
-     * Handles the delete command.
+     * Removes a task from the list permanently.
      *
-     * @param input The user input.
+     * @param arguments Task number to delete
      */
-    private void handleDelete(String input) {
-        try {
-            int taskNumber = Integer.parseInt(input.substring(7).trim()) - 1;
-            if (taskNumber < 0 || taskNumber >= tasks.size()) {
-                throw new NeerajException("OOPS!!! Invalid task number.");
-            }
-            Task removed = tasks.remove(taskNumber);
-            Storage.save(tasks);
-            System.out.println("Noted. I've removed this task:");
-            System.out.println("  " + removed);
-            System.out.println("Now you have " + tasks.size() + " tasks in the list.");
-            System.out.println(LINE + "\n");
-        } catch (NumberFormatException e) {
-            System.out.println("OOPS!!! Please provide a valid task number.");
-            System.out.println(LINE + "\n");
-        } catch (NeerajException e) {
-            System.out.println(e.getMessage());
-            System.out.println(LINE + "\n");
+    private void handleDelete(String arguments) throws NeerajException {
+        int taskNumber = Parser.parseTaskNumber(arguments);
+        if (taskNumber >= tasks.size()) {
+            throw new NeerajException("OOPS!!! Invalid task number.");
         }
+        Task removed = tasks.remove(taskNumber);
+        Storage.save(tasks.getTasks());
+        ui.showTaskDeleted(removed, tasks.size());
     }
 
     /**
-     * Handles the todo command.
+     * Adds a new todo task.
      *
-     * @param input The user input.
+     * @param arguments The todo description
      */
-    private void handleTodo(String input) {
-        try {
-            String description = input.substring(5).trim();
-            if (description.isEmpty()) {
-                throw new NeerajException("OOPS!!! The description of a todo cannot be empty.");
-            }
-            Task newTask = new Todo(description);
-            addTask(newTask);
-        } catch (NeerajException e) {
-            System.out.println(e.getMessage());
-            System.out.println(LINE + "\n");
+    private void handleTodo(String arguments) throws NeerajException {
+        if (arguments.isEmpty()) {
+            throw new NeerajException("OOPS!!! The description of a todo cannot be empty.");
         }
+        Task newTask = new Todo(arguments);
+        tasks.add(newTask);
+        Storage.save(tasks.getTasks());
+        ui.showTaskAdded(newTask, tasks.size());
     }
 
     /**
-     * Handles the deadline command.
+     * Adds a deadline task with a due date.
      *
-     * @param input The user input.
+     * @param arguments Description and deadline (separated by /by)
      */
-    private void handleDeadline(String input) {
-        try {
-            String remaining = input.substring(9).trim();
-            if (remaining.isEmpty()) {
-                throw new NeerajException("OOPS!!! The description of a deadline cannot be empty.");
-            }
-            String[] parts = remaining.split(" /by ", 2);
-            if (parts.length < 2) {
-                throw new NeerajException("OOPS!!! Please specify a deadline with /by");
-            }
-            String description = parts[0].trim();
-            String by = parts[1].trim();
-            if (description.isEmpty()) {
-                throw new NeerajException("OOPS!!! The description of a deadline cannot be empty.");
-            }
-            Task newTask = new Deadline(description, by);
-            addTask(newTask);
-        } catch (NeerajException e) {
-            System.out.println(e.getMessage());
-            System.out.println(LINE + "\n");
+    private void handleDeadline(String arguments) throws NeerajException {
+        if (arguments.isEmpty()) {
+            throw new NeerajException("OOPS!!! The description of a deadline cannot be empty.");
         }
+        String[] parts = arguments.split(" /by ", 2);
+        if (parts.length < 2) {
+            throw new NeerajException("OOPS!!! Please specify a deadline with /by");
+        }
+        String description = parts[0].trim();
+        String by = parts[1].trim();
+        if (description.isEmpty()) {
+            throw new NeerajException("OOPS!!! The description of a deadline cannot be empty.");
+        }
+        Task newTask = new Deadline(description, by);
+        tasks.add(newTask);
+        Storage.save(tasks.getTasks());
+        ui.showTaskAdded(newTask, tasks.size());
     }
 
     /**
-     * Handles the event command.
+     * Adds an event with start and end times.
      *
-     * @param input The user input.
+     * @param arguments Description and time period (using /from and /to)
      */
-    private void handleEvent(String input) {
-        try {
-            String remaining = input.substring(6).trim();
-            if (remaining.isEmpty()) {
-                throw new NeerajException("OOPS!!! The description of an event cannot be empty.");
-            }
-            String[] parts1 = remaining.split(" /from ", 2);
-            if (parts1.length < 2) {
-                throw new NeerajException("OOPS!!! Please specify event time with /from and /to");
-            }
-            String description = parts1[0].trim();
-            String[] parts2 = parts1[1].split(" /to ", 2);
-            if (parts2.length < 2) {
-                throw new NeerajException("OOPS!!! Please specify event end time with /to");
-            }
-            String from = parts2[0].trim();
-            String to = parts2[1].trim();
-            if (description.isEmpty()) {
-                throw new NeerajException("OOPS!!! The description of an event cannot be empty.");
-            }
-            Task newTask = new Event(description, from, to);
-            addTask(newTask);
-        } catch (NeerajException e) {
-            System.out.println(e.getMessage());
-            System.out.println(LINE + "\n");
+    private void handleEvent(String arguments) throws NeerajException {
+        if (arguments.isEmpty()) {
+            throw new NeerajException("OOPS!!! The description of an event cannot be empty.");
         }
+        String[] parts1 = arguments.split(" /from ", 2);
+        if (parts1.length < 2) {
+            throw new NeerajException("OOPS!!! Please specify event time with /from and /to");
+        }
+        String description = parts1[0].trim();
+        String[] parts2 = parts1[1].split(" /to ", 2);
+        if (parts2.length < 2) {
+            throw new NeerajException("OOPS!!! Please specify event end time with /to");
+        }
+        String from = parts2[0].trim();
+        String to = parts2[1].trim();
+        if (description.isEmpty()) {
+            throw new NeerajException("OOPS!!! The description of an event cannot be empty.");
+        }
+        Task newTask = new Event(description, from, to);
+        tasks.add(newTask);
+        Storage.save(tasks.getTasks());
+        ui.showTaskAdded(newTask, tasks.size());
     }
 
     /**
-     * Handles unknown commands.
+     * Searches for tasks containing the keyword.
+     *
+     * @param keyword The search keyword
      */
+    private void handleFind(String keyword) throws NeerajException {
+        if (keyword.isEmpty()) {
+            throw new NeerajException("OOPS!!! The search keyword cannot be empty.");
+        }
+        TaskList foundTasks = tasks.find(keyword);
+        ui.showFoundTasks(foundTasks);
+    }
+
     private void handleUnknownCommand() {
-        System.out.println("I don't understand that command!");
-        System.out.println(LINE + "\n");
+        ui.showError("I don't understand that command!");
     }
 
-    /**
-     * Adds a task, saves to storage, and displays confirmation message.
-     *
-     * @param task The task to add.
-     */
-    private void addTask(Task task) {
-        tasks.add(task);
-        Storage.save(tasks);
-        System.out.println("Got it. I've added this task:");
-        System.out.println("  " + task);lis
-        System.out.println("Now you have " + tasks.size() + " tasks in the list.");
-        System.out.println(LINE + "\n");
-    }
-
-    /**
-     * Main entry point for the application.
-     *
-     * @param args Command line arguments (not used).
-     */
     public static void main(String[] args) {
         new Neeraj().run();
     }
